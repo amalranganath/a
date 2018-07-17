@@ -1,0 +1,32 @@
+{
+  "name": "amalranganath/a",
+  "description": "A PHP Framework to make Wordpres Plugins",
+  "keywords": [
+    "wordpress",
+    "wp framework",
+    "php framework"
+  ],
+  "homepage": "https://github.com/amalranganath/a",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Amal Ranganath",
+      "homepage": "https://www.facebook.com/amalranganath"
+    }
+  ],
+  "require": {
+    "php": ">=5.4.0",
+    "ext-mbstring": "*"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "~4.0"
+  },
+  "autoload": {
+    "psr-4": { "A\\" : "" }
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-master": "1.0-dev"
+    }
+  }
+}
