@@ -25,9 +25,11 @@ class A {
         }
         self::$config = (object) $config;
         self::$plugin = new plugin();
+
         //init plugin
         add_action('plugins_loaded', [$this, 'init']);
-        
+        //load classes
+        spl_autoload_register([__CLASS__, 'loadClasses']);
     }
 
     /**
@@ -85,7 +87,7 @@ class A {
         $atts = shortcode_atts(['model' => '', 'template' => '', 'action' => ''], $atts);
         extract($atts);
         $file = A::$config->basePath . "views/$template.php";
-        
+
         //start rendering
         ob_start();
         if ($model == '') {
@@ -98,7 +100,7 @@ class A {
         }
         $content = ob_get_contents();
         ob_end_clean();
-        
+
         return $content;
     }
 
@@ -108,20 +110,15 @@ class A {
      */
     public static function loadClasses($class_name) {
         $file = str_replace('_', '', ($class_name));
-
-        //if call a core class
-        if (file_exists(A::$config->basePath . "vendor/a/$file.php"))
-            include_once A::$config->basePath . "vendor/a/$file.php";
-        //if call a model
+        //if a model class
         if (file_exists(A::$config->basePath . "models/$file.php")) {
-            //var_dump($class_name);
             include_once A::$config->basePath . "models/$file.php";
         }
-        //iff call a other class
+        //if a controllers class
         if (file_exists(A::$config->basePath . "controllers/" . $file . "Controller.php")) {
             include_once A::$config->basePath . "controllers/" . $file . "Controller.php";
         }
-        //iff call a admin class
+        //if a admin controllers class
         if (file_exists(A::$config->basePath . "controllers/admin/" . $file . "Controller.php")) {
             include_once A::$config->basePath . "controllers/admin/" . $file . "Controller.php";
         }
@@ -129,8 +126,15 @@ class A {
 
 }
 
+/**
+ * Plugin helper class
+ */
 class plugin {
 
+    /**
+     * Plugin options
+     * @var array 
+     */
     public $options;
 
     public function __construct() {
@@ -144,7 +148,7 @@ class plugin {
      * @param string $option
      */
     public function get($option) {
-        return $this->options[$option];
+        return isset($this->options[$option]) ? $this->options[$option] : '';
     }
 
 }
