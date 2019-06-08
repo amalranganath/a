@@ -1,23 +1,24 @@
 <?php
 //namespace Core;
-
-/**
- * ANotify class.
- * @package  Plug-in/Core
- * @author   Amal Ranganath
- * @version  1.0.1
- */
+// Exit if accessed directly
 if (!defined('ABSPATH')) {
-    exit; // Exit if accessed directly
+    exit; 
 }
 
 if (!class_exists('ANotify')) {
 
+    /**
+     * ANotify class.
+     * 
+     * @package  Plug-in/Core
+     * @author   Amal Ranganath
+     * @version  1.0.1
+     */
     class ANotify {
 
         /**
          * Add a message.
-         * @param string $text
+         * @param string $text The message to display
          */
         public static function addMessage($text) {
             $_SESSION['messages'][] = $text;
@@ -25,7 +26,7 @@ if (!class_exists('ANotify')) {
 
         /**
          * Add an error.
-         * @param string $text
+         * @param string $text The error to display
          */
         public static function addError($text) {
             $_SESSION['errors'][] = $text;
@@ -60,7 +61,7 @@ if (!class_exists('ANotify')) {
         public static function flash($class, $message = '') {
             ?>
             <div class="<?= $class ?> published notice inline is-dismissible">
-                <p><strong><?= __($message, A::$config->i18n); ?></strong></p>
+                <p><strong><?= A::t($message); ?></strong></p>
             </div>
             <?php
         }

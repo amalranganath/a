@@ -5,7 +5,7 @@
  * @package  Plug-in/Core
  * @category Controller
  * @author   Amal Ranganath
- * @version  1.0.0
+ * @version  1.0.1
  */
 if (!defined('ABSPATH')) {
     exit;
@@ -82,10 +82,26 @@ if (!class_exists('WPAdmin')) {
                 if ($this->current == '')
                     $this->current = key($this->tabs);
             }
-            //init
+            //add settings link
+            add_filter('plugin_action_links_' . A::$config->baseName, array(__CLASS__, 'pluginActionLink'));
+
+            //init actions
             add_action('wp_loaded', array($this, 'init'));
+
             //add admin menu items
             add_action('admin_menu', array($this, 'menuItems'), 50);
+        }
+
+        /**
+         * Display plug-in settings link
+         * @since   1.0.0
+         * @param   array $links
+         * @return  mixed
+         */
+        public static function pluginActionLink($links) {
+            $links[] = AHtml::tag('a', 'Settings', ['href' => get_admin_url(null, "admin.php?page=" . static::$mainMenu['slug'])]);
+
+            return $links;
         }
 
         /**
@@ -134,10 +150,10 @@ if (!class_exists('WPAdmin')) {
          */
         public function menuItems() {
             //main menu item
-            add_menu_page(__(static::$mainMenu['pageTitle'], A::$config->i18n), __(static::$mainMenu['title'], A::$config->i18n), static::$capability, static::$mainMenu['slug'], array($this, 'renderPage'), static::$mainMenu['icon'], static::$mainMenu['position']);
+            add_menu_page(A::t(static::$mainMenu['pageTitle']), A::t(static::$mainMenu['title']), static::$capability, static::$mainMenu['slug'], array($this, 'renderPage'), static::$mainMenu['icon'], static::$mainMenu['position']);
             //sub menu items
             foreach (static::$pages as $page) {
-                add_submenu_page(static::$mainMenu['slug'], __($page['pageTitle'], A::$config->i18n), __($page['title'], A::$config->i18n), static::$capability, $page['slug'], array($this, 'renderPage'));
+                add_submenu_page(static::$mainMenu['slug'], A::t($page['pageTitle']), A::t($page['title']), static::$capability, $page['slug'], array($this, 'renderPage'));
             }
         }
 
@@ -162,14 +178,14 @@ if (!class_exists('WPAdmin')) {
                     <h2 class="nav-tab-wrapper">
                         <?php
                         foreach ($tabs as $tab => $title)
-                            echo '<a href="' . admin_url("admin.php?page=" . $this->page . "&tab=" . $tab) . '" class="nav-tab ' . ( $this->current == $tab ? 'nav-tab-active' : '' ) . '">' . __($title, A::$config->i18n) . '</a>';
+                            echo '<a href="' . admin_url("admin.php?page=" . $this->page . "&tab=" . $tab) . '" class="nav-tab ' . ( $this->current == $tab ? 'nav-tab-active' : '' ) . '">' . A::t($title) . '</a>';
                         ?>
                     </h2>
                 <?php endif; ?>
                 <?php
                 //load template
                 if (isset($_REQUEST['action']))
-                    $this->render("$this->current-$this->action", ['options' => A::$plugin->options]);
+                    $this->render("$this->current/$this->action", ['options' => A::$plugin->options]);
                 else
                     $this->render("$this->current", ['options' => A::$plugin->options]);
                 ?>
@@ -179,11 +195,12 @@ if (!class_exists('WPAdmin')) {
 
         /**
          * Save the settings.
+         * @since 1.0.1
          */
-        public static function save() {
+        public static function nonce($action) {
 
-            if (empty($_REQUEST['_wpnonce']) || !wp_verify_nonce($_REQUEST['_wpnonce'], 'pc-settings')) {
-                die(__('Action failed. Please refresh the page and retry.', A::$config->i18n));
+            if (empty($_REQUEST['_wpnonce']) || !wp_verify_nonce($_REQUEST['_wpnonce'], $action)) {
+                die(A::t('Action failed. Please refresh the page and retry.'));
             }
         }
 

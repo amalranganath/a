@@ -1,20 +1,19 @@
 <?php
 
-/**
- * Base Controller class.
- * the base controller class
- * @package  Plug-in/Core
- * @author   Amal Ranganath
- * @version  1.0.0
- */
+// Exit if accessed directly
 if (!defined('ABSPATH')) {
-    exit; // Exit if accessed directly
+    exit;
 }
 
 if (!class_exists('Base_Controller')) {
 
     /**
-     * This class handles underground controlling parts like rendering views.
+     * Base Controller class.
+     * This class handles underground controlling parts like rendering titles, views.
+     * 
+     * @package  Plug-in/Core
+     * @author   Amal Ranganath
+     * @version  1.0.1
      */
     class BaseController {
 
@@ -56,25 +55,30 @@ if (!class_exists('Base_Controller')) {
 
             //title filter
             add_filter('the_title', [$this, 'getTitle'], 10, 2);
-            add_filter('wp_title', [$this, 'headTitle'], 1, 3);
+            add_filter('document_title_parts', [$this, 'docTitle']); //document_title_parts pre_get_document_title
         }
 
-        public function headTitle($title, $sep, $seplocation) {
-            var_dump($title);
-            return $this->title;
+        /**
+         * Page title
+         * @param array $title
+         * @return string
+         */
+        public function docTitle($parts) {
+            //set title
+            $parts['title'] = $this->title;
+            return $parts;
         }
 
         /**
          * Get the title
-         * @param string $title
-         * @param integer $id
-         * @return type
+         * @param string $title Post Title
+         * @param integer $id Post ID
+         * @return string
          */
         public function getTitle($title, $id) {
             return $id == 0 ? $this->title : $title;
         }
 
-        
         /**
          * Render view by given template
          * @param string $template Template file name (required)
@@ -82,7 +86,7 @@ if (!class_exists('Base_Controller')) {
          */
         protected function render($template, $atts = []) {
             //set path
-            $path = A::$config->basePath . "views/";
+            $path = A::$plugin->basePath . "views/";
             $layout = $path . "layout.php";
             if (is_admin())
                 $path .= "admin/";

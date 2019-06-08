@@ -1,14 +1,7 @@
 <?php
-/**
- * AGrid Class.
- *
- * @package  Plug-in/Core
- * @category Model
- * @author   Amal Ranganath
- * @version  1.0.0
- */
+// Exit if accessed directly
 if (!defined('ABSPATH')) {
-    exit; // Exit if accessed directly
+    exit; 
 }
 //admin includes
 if (!is_admin()) {
@@ -23,6 +16,14 @@ if (!is_admin()) {
 
 if (!class_exists('AGrid')) {
 
+    /**
+     * AGrid Class.
+     *
+     * @package  Plug-in/Core
+     * @category Model
+     * @author   Amal Ranganath
+     * @version  1.0.0
+     */
     class AGrid extends WP_List_Table {
 
         /**
@@ -59,8 +60,8 @@ if (!class_exists('AGrid')) {
             self::$pk = $config['class']::PRIMARY_KEY;
             //call parent constructor
             parent::__construct([
-                'singular' => __($config['class']::TABLE_NAME, A::$config->i18n), //singular name of the listed records
-                'plural' => __($config['class']::TABLE_NAME . "s", A::$config->i18n), //plural name of the listed records
+                'singular' => A::t($config['class']::TABLE_NAME), //singular name of the listed records
+                'plural' => A::t($config['class']::TABLE_NAME . "s"), //plural name of the listed records
                 'ajax' => false, //should this table support ajax?
                 'screen' => $config['class']::TABLE_NAME
             ]);

@@ -1,22 +1,19 @@
 <?php
 
-/**
- * BaseModel Class.
- *
- * @package  Plug-in/Core
- * @category Model
- * @author   Amal Ranganath
- * @version  1.0.6
- */
+// Exit if accessed directly
 if (!defined('ABSPATH')) {
-    exit; // Exit if accessed directly
+    exit;
 }
-
 
 if (!class_exists('BaseModel')) {
 
     /**
-     * Base model class
+     * BaseModel Class.
+     *
+     * @package  Plug-in/Core
+     * @category Model
+     * @author   Amal Ranganath
+     * @version  1.0.6
      */
     class BaseModel {
 
@@ -102,9 +99,10 @@ if (!class_exists('BaseModel')) {
          * Set post attributes before insert
          * @param void $data
          */
-        public function setAttributes($data) {
+        public function setAttributes($data = []) {
             if (empty($data)) {
-                exit();
+                //init
+                $data = array_fill_keys(array_keys(static::attributLabels()), null);
             }
             if (is_array($data)) {
                 $this->attributes = self::$wpdb->_escape($data);
@@ -211,7 +209,7 @@ if (!class_exists('BaseModel')) {
          * @return $this
          */
         public function orderby($field, $order = 'DESC') {
-            $this->query .=" ORDER BY $field $order";
+            $this->query .= " ORDER BY $field $order";
             return $this;
         }
 

@@ -1,25 +1,31 @@
 <?php
-/**
- * WP Form Class
- *
- * @package  Plug-in/Form
- * @category Form
- * @author   Amal Ranganath
- * @version  1.0.1
- */
+// Exit if accessed directly
 if (!defined('ABSPATH')) {
     exit;
 }
 
 if (!class_exists('AForm')) {
 
+    /**
+     * AForm Class
+     *
+     * @package  Plug-in/Form
+     * @category Form
+     * @author   Amal Ranganath
+     * @version  1.0.2
+     */
     class AForm {
 
         public static $name;
         public static $model;
 
         /**
-         * 
+         * @since 1.0.2
+         */
+        public static $isAdmin = false;
+
+        /**
+         * Nothing go here
          */
         public function __construct() {
             
@@ -32,9 +38,11 @@ if (!class_exists('AForm')) {
          * @param array $options 
          */
         public static function begin($name = 'form', $method = 'POST', $options = []) {
-            static::$name = $name;
+            $options['id'] = static::$name = $name;
             $options['action'] = isset($options['action']) ? $options['action'] : '';
             $options['method'] = $method;
+            $options['class'] = ' a-form';
+            self::$isAdmin = isset($options['is_admin']) ? $options['is_admin'] : is_admin();
             //display noticess
             ANotify::show();
             echo AHtml::beginTag('form', $options);
@@ -54,7 +62,7 @@ if (!class_exists('AForm')) {
          */
         public static function section($option) {
             if (!empty($option['title'])) {
-                echo '<h2>' . esc_html($option['title']) . '</h2>';
+                echo AHtml::tag(isset($option['title_tag']) ? $option['title_tag'] : 'h2', esc_html($option['title']));
             }
             if (!empty($option['desc'])) {
                 echo wpautop(wptexturize(wp_kses_post($option['desc'])));
@@ -64,7 +72,7 @@ if (!class_exists('AForm')) {
                 do_action('before_' . sanitize_title($id) . '_section');
             }
 
-            if (is_admin())
+            if (self::$isAdmin)
                 echo '<table class="form-table' . ( isset($option['class']) ? $option['class'] : '' ) . '">' . "\n\n";
 
             if (!empty($option['id'])) {
@@ -77,7 +85,7 @@ if (!class_exists('AForm')) {
          * @param string $id
          */
         public static function sectionEnd($id) {
-            if (is_admin())
+            if (self::$isAdmin)
                 echo '</table>';
             if (!empty($id)) {
                 do_action('after_' . sanitize_title($id) . '_section');
@@ -89,7 +97,7 @@ if (!class_exists('AForm')) {
          * @param type $option
          */
         public static function renderLabel($option) {
-            if (is_admin())
+            if (self::$isAdmin)
                 echo AHtml::beginTag('th', ['scope' => 'row', 'class' => 'titledesc']);
             if ($option['type'] == 'checkbox') {
                 echo esc_html($option['label']);
@@ -97,7 +105,7 @@ if (!class_exists('AForm')) {
                 echo AHtml::tag('label', esc_html($option['label']), ['for' => $option['id']]);
                 echo $option['desc_tip'];
             }
-            if (is_admin())
+            if (self::$isAdmin)
                 echo '</th>';
         }
 
@@ -109,7 +117,8 @@ if (!class_exists('AForm')) {
         public static function field($model, $option) {
             //check for defaults
             if (!isset($option['type'])) {
-                ANotify::flash('error', "The field doesn't have a type");
+                //ANotify::flash('error', "The field doesn't have a type");
+                $option['type'] = 'text';
             }
             if (!isset($option['name'])) {
                 ANotify::flash('error', "The field doesn't have a name");
@@ -118,7 +127,7 @@ if (!class_exists('AForm')) {
                 ANotify::flash('error', "The form name must be unique, should not use it for a field name!");
             }
             if (!isset($option['id'])) {
-                $option['id'] = $option['name'];
+                $option['id'] = preg_replace("/[^a-zA-Z0-9]/", "", $option['name']);
             }
             if (!isset($option['class'])) {
                 $option['class'] = '';
@@ -133,15 +142,15 @@ if (!class_exists('AForm')) {
             $option['value'] = self::getValue($model, $option['id'], isset($option['value']) ? $option['value'] : '');
 
             // Description handling
-            $option = self::get_field_description($option);
+            $option = self::fieldDescription($option);
             $description = $option['desc'];
             unset($option['desc']);
 
             //start render
-            if (is_admin())
+            if (self::$isAdmin)
                 echo AHtml::beginTag('tr', ['valign' => 'top', 'class' => '']);
             else
-                echo AHtml::beginTag('div', ['class' => isset($option['wrap_class']) ? isset($option['wrap_class']) : 'field-wrap']);
+                echo AHtml::beginTag('div', ['class' => 'field-wrap ' . $option['id'] . ' ' . (isset($option['wrap_class']) ? isset($option['wrap_class']) : '')]);
 
             //field label
             if (!isset($option['label']) && $model instanceof BaseModel) {
@@ -155,7 +164,7 @@ if (!class_exists('AForm')) {
             unset($option['desc_tip']);
 
             //render field
-            if (is_admin())
+            if (self::$isAdmin)
                 echo AHtml::beginTag('td', ['valign' => 'top', 'class' => 'forminp forminp-' . sanitize_title($option['type'])]);
 
             // Switch based on type
@@ -176,7 +185,7 @@ if (!class_exists('AForm')) {
                     }
                     if ($option['type'] == 'upload') {
                         $option['type'] = 'text';
-                        $option['class'] .= ' upload-img-url';
+                        $option['class'] .= ' file-upload';
                     }
 
                     echo AHtml::tag('input', '', $option);
@@ -188,7 +197,8 @@ if (!class_exists('AForm')) {
                 case 'textarea':
                     unset($option['type']);
                     echo $description;
-                    echo AHtml::tag('textarea', $option['value'], $option);
+                    echo AHtml::beginTag('textarea', $option);
+                    echo $option['value'] . '</textarea>';
 
                     break;
 
@@ -239,34 +249,19 @@ if (!class_exists('AForm')) {
 
                 // Checkbox input
                 case 'checkbox' :
-                    $visbility_class = array();
-                    if (!isset($option['hide_if_checked'])) {
-                        $option['hide_if_checked'] = false;
-                    }
-                    if (!isset($option['show_if_checked'])) {
-                        $option['show_if_checked'] = false;
-                    }
-                    if ('yes' == $option['hide_if_checked'] || 'yes' == $option['show_if_checked']) {
-                        $visbility_class[] = 'hidden_option';
-                    }
-                    if ('option' == $option['hide_if_checked']) {
-                        $visbility_class[] = 'hide_options_if_checked';
-                    }
-                    if ('option' == $option['show_if_checked']) {
-                        $visbility_class[] = 'show_options_if_checked';
-                    }
 
                     if (!isset($option['checkboxgroup']) || 'start' == $option['checkboxgroup']) {
                         ?>
                         <fieldset>
                         <?php } else { ?>
-                            <fieldset class="<?php echo esc_attr(implode(' ', $visbility_class)); ?>">
+                            <fieldset class="<?php echo $option['class']; ?>">
                             <?php } if (!empty($option['title'])) { ?>
                                 <legend class="screen-reader-text"><span><?php echo esc_html($option['title']) ?></span></legend>
                                     <?php } ?>
                             <label for="<?php echo $option['id'] ?>">
                                 <?php
-                                $option['checked'] = $option['value'];
+                                if ($option['value'])
+                                    $option['checked'] = $option['value'];
                                 echo AHtml::tag('input', '', $option);
                                 echo $description
                                 ?>
@@ -306,7 +301,7 @@ if (!class_exists('AForm')) {
                     break;
             }
 
-            echo is_admin() ? '</td></tr>' : '</div>';
+            echo self::$isAdmin ? '</td></tr>' : '</div>';
         }
 
         /**
@@ -335,7 +330,7 @@ if (!class_exists('AForm')) {
          * @return array The description and tip as a 2 element array
          * @deprecated since version 1.0.1
          */
-        public static function get_field_description($option) {
+        public static function fieldDescription($option) {
             $description = '';
             $tooltip_html = '';
 
